@@ -60,3 +60,14 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+# Graphics and video
+*.jpg
+*.png
+*.mov
+*.avi
+*.mp4
+
+# Flash files
+*.swf
+
