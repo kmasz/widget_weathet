@@ -14,6 +14,7 @@
 	import flash.text.TextFormat;
 	import flash.utils.Timer;
 	import flash.events.TimerEvent;
+	import flash.net.Socket;
 
 
 
@@ -28,6 +29,7 @@
 		var godz_data:Vector.<String> = new Vector.<String>();
 		var petla:Number = 0;
 		var timer:Timer = null;
+		var socket:Socket = null;
 
 
 		public function pogoda_widget()
@@ -66,7 +68,7 @@
 			temp.setTextFormat(format1);
 			cisn.text = cisn_data[0];
 			cisn.setTextFormat(format1);
-			waitLoop();
+			//waitLoop();
 		}
 		function intro_up():void
 		{
@@ -81,18 +83,19 @@
 		{
 			blik_gora.x = -180;
 			blik_dol.x = -180;
-			TweenLite.to(blik_gora, 2, {x:340, ease:Cubic.easeInOut});
+			TweenLite.to(blik_gora, 3, {x:340, ease:Cubic.easeInOut});
+			TweenLite.delayedCall(1.7,change_data);
+			//change_data();
 			TweenLite.to(blik_dol, 2, {x:340, delay:0.5, ease:Cubic.easeInOut});
 		}
-		function data_change(event:TimerEvent):void
+		function change_data():void
 		{
-			timer.removeEventListener(TimerEvent.TIMER, data_change);
-			timer = null;
 			if (petla < 3)
 			{
-				//blik_on();
+				//TweenLite.to(godzina, 0.1, {alpha:0, ease:Cubic.easeInOut});
 				godzina.text = godz_data[petla];
 				godzina.setTextFormat(format2);
+				//TweenLite.to(godzina, 0.1, {alpha:1, ease:Cubic.easeInOut});
 				temp.text = temp_data[petla];
 				temp.setTextFormat(format1);
 				cisn.text = cisn_data[petla];
@@ -109,9 +112,16 @@
 				cisn.text = cisn_data[petla];
 				cisn.setTextFormat(format1);
 				petla++;
-
 			}
+			play_video();
 			waitLoop();
+		}
+		function data_change(event:TimerEvent):void
+		{
+			timer.removeEventListener(TimerEvent.TIMER, data_change);
+			timer = null;
+			//change_data();
+			blik_on();
 		}
 		function waitLoop():void
 		{
@@ -119,15 +129,14 @@
 			timer.addEventListener(TimerEvent.TIMER, data_change);
 			timer.start();
 		}
-		/*function waitLoop():void
+		function play_video():void
 		{
-		if (ifOutro == false)
-		{
-		timer = new Timer(3000);
-		timer.addEventListener(TimerEvent.TIMER, legendHide);
-		timer.start();
+			socket = new Socket("localhost",5250);
+			socket.writeUTFBytes("MIXER 1-2 FILL 0.1 0.14 0.12 0.25\r\n");
+			socket.writeUTFBytes("play 1-2 4119 loop mix 10\r\n");
+			socket.flush();
 		}
-		}*/
+
 		//overridden preDispose that will be called just before the template is removed by the template host. Allows us to clean up.
 		override public function preDispose():void
 		{
