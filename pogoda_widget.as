@@ -27,16 +27,18 @@
 		var temp_data:Vector.<String> = new Vector.<String>();
 		var cisn_data:Vector.<String> = new Vector.<String>();
 		var godz_data:Vector.<String> = new Vector.<String>();
+		var ikona:Vector.<String> = new Vector.<String>();
 		var petla:Number = 0;
 		var timer:Timer = null;
 		var socket:Socket = null;
+		var initStart:Boolean = true;
 
 
 		public function pogoda_widget()
 		{
 			// constructor code
 			var myXML:XML = new XML();
-			var XML_URL:String = "WTKXML_WidgetPog.xml";
+			var XML_URL:String = "WidgetPog.xml";
 			var myXMLURL:URLRequest = new URLRequest(XML_URL);
 			xmlLoader = new URLLoader(myXMLURL);
 			xmlLoader.addEventListener(Event.COMPLETE, xmlLoaded);
@@ -68,7 +70,12 @@
 			temp.setTextFormat(format1);
 			cisn.text = cisn_data[0];
 			cisn.setTextFormat(format1);
+			ikona[0] = xmlData.VIDEOLINK1;
+			ikona[1] = xmlData.VIDEOLINK2;
+			ikona[2] = xmlData.VIDEOLINK3;
+			//trace(ikona[0]);
 			//waitLoop();
+			init_video();
 		}
 		function intro_up():void
 		{
@@ -86,6 +93,22 @@
 			TweenLite.to(blik_gora, 3, {x:340, ease:Cubic.easeInOut});
 			TweenLite.delayedCall(1.7,change_data);
 			//change_data();
+			if (initStart == true)
+			{
+				play_video(petla);
+				initStart = false;
+			}
+			else
+			{
+				if (petla >= 3)
+				{
+					play_video(0);
+				}
+				else
+				{
+					play_video(petla);
+				}
+			}
 			TweenLite.to(blik_dol, 2, {x:340, delay:0.5, ease:Cubic.easeInOut});
 		}
 		function change_data():void
@@ -93,6 +116,7 @@
 			if (petla < 3)
 			{
 				//TweenLite.to(godzina, 0.1, {alpha:0, ease:Cubic.easeInOut});
+				//play_video(petla);
 				godzina.text = godz_data[petla];
 				godzina.setTextFormat(format2);
 				//TweenLite.to(godzina, 0.1, {alpha:1, ease:Cubic.easeInOut});
@@ -100,11 +124,13 @@
 				temp.setTextFormat(format1);
 				cisn.text = cisn_data[petla];
 				cisn.setTextFormat(format1);
+				//trace(petla);
 				petla++;
 			}
 			else
 			{
 				petla = 0;
+				//play_video(petla);
 				godzina.text = godz_data[petla];
 				godzina.setTextFormat(format2);
 				temp.text = temp_data[petla];
@@ -113,7 +139,6 @@
 				cisn.setTextFormat(format1);
 				petla++;
 			}
-			play_video();
 			waitLoop();
 		}
 		function data_change(event:TimerEvent):void
@@ -125,18 +150,30 @@
 		}
 		function waitLoop():void
 		{
-			timer = new Timer(3000);
+			timer = new Timer(5000);
 			timer.addEventListener(TimerEvent.TIMER, data_change);
 			timer.start();
 		}
-		function play_video():void
+		function init_video():void
 		{
 			socket = new Socket("localhost",5250);
-			socket.writeUTFBytes("MIXER 1-2 FILL 0.1 0.14 0.12 0.25\r\n");
-			socket.writeUTFBytes("play 1-2 4119 loop mix 10\r\n");
+			socket.writeUTFBytes("MIXER 1-20 FILL 0.1 0.14 0.12 0.25\r\n");
+			socket.flush();
+		}
+		function play_video(counter:Number):void
+		{
+			socket = new Socket("localhost",5250);
+			socket.writeUTFBytes("play 1-20 "+ikona[counter]+" loop mix 10\r\n");
 			socket.flush();
 		}
 
+		function stop_video():void
+		{
+			socket = new Socket("localhost",5250);
+			socket.writeUTFBytes("CLEAR 1-20\r\n");
+			socket.writeUTFBytes("MIXER 1-20 CLEAR\r\n");
+			socket.flush();
+		}
 		//overridden preDispose that will be called just before the template is removed by the template host. Allows us to clean up.
 		override public function preDispose():void
 		{
@@ -144,23 +181,25 @@
 			timer.stop();
 			timer.removeEventListener(TimerEvent.TIMER, data_change);
 			timer = null;
+			stop_video();
 		}
 		//overridden Stop that initiates the outro animation. IMPORTANT, it is very important when you override Stop to later call super.Stop() or removeTemplate()
 		override public function Stop():void
 		{
 			//do the outro animation
+			stop_video();
 			outroAnimation();
 		}
 		function outroAnimation():void
 		{
 			blik_gora.x = 340;
 			blik_dol.x = 340;
-			TweenLite.to(blik_dol, 2, {x:-180, ease:Cubic.easeInOut});
-			TweenLite.to(blik_gora, 2, {x:-180, delay:0.5, ease:Cubic.easeInOut});
-			TweenLite.to(maska, 0.8, {y:-128.15, delay:0.5, ease:Cubic.easeInOut});
-			TweenLite.to(blik_dol_maska, 0.8, {y:-54, delay:0.5, ease:Cubic.easeInOut});
-			TweenLite.to(maska, 0.5, {x:-249.35, delay:1.2 ,ease:Cubic.easeInOut});
-			TweenLite.to(blik_gora_maska, 0.5, {width:0, delay:1.2 ,ease:Cubic.easeInOut});
+			TweenLite.to(blik_dol, 2, {x:-180, delay:0.2, ease:Cubic.easeInOut});
+			TweenLite.to(blik_gora, 2, {x:-180, delay:0.7, ease:Cubic.easeInOut});
+			TweenLite.to(maska, 0.8, {y:-128.15, delay:0.7, ease:Cubic.easeInOut});
+			TweenLite.to(blik_dol_maska, 0.8, {y:-54, delay:0.7, ease:Cubic.easeInOut});
+			TweenLite.to(maska, 0.5, {x:-249.35, delay:1.4 ,ease:Cubic.easeInOut});
+			TweenLite.to(blik_gora_maska, 0.5, {width:0, delay:1.4 ,ease:Cubic.easeInOut, onComplete: removeTemplate});
 		}
 	}
 
